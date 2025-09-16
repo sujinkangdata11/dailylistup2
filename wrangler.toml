@@ -1,0 +1,11 @@
+name = "listup-anime-toon-7923"
+main = "worker.js"
+compatibility_date = "2024-03-01"
+
+[[kv_namespaces]]
+binding = "CHANNEL_DATA"
+id = "b6cba85d233f45e294e44b0f49b70eb7"
+
+[vars]
+GOOGLE_DRIVE_FOLDER_ID = "1MsoASuSXq1HkW-tbdh0PjqmeaSxE8DL5"
+GOOGLE_CLIENT_ID = "159046785658-07hf5ani7blsafsav0vrl19db7pkamdp.apps.googleusercontent.com"

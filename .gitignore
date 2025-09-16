@@ -1,0 +1,22 @@
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+
+# Wrangler local files
+.wrangler/
+
+# System files
+.DS_Store
+
+# Temporary files
+*.tmp
+consolidated-channel-data.json
+corrected-channel-data.json
+
+# Daily list up submodule with old secrets
+dailylistup/
+
+# Legacy server directory with hardcoded secrets
+server/

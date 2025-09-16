@@ -1,0 +1,19 @@
+{
+  "name": "listup-sync-server",
+  "version": "1.0.0",
+  "description": "Sync Google Drive data to listup.anime-toon-7923.workers.dev",
+  "main": "oauth-server.js",
+  "scripts": {
+    "start": "node oauth-server.js",
+    "sync": "node sync-to-listup.js",
+    "deploy": "wrangler publish"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "express": "^4.18.2",
+    "googleapis": "^126.0.1"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
