@@ -3,6 +3,7 @@
 
 # Node modules
 node_modules/
+example/node_modules/
 
 # Wrangler local files
 .wrangler/

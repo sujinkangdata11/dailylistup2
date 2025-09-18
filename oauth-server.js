@@ -1,7 +1,10 @@
 // OAuth 토큰 자동 수신 서버 - listup.anime-toon-7923.workers.dev 전용
+const express = require('express');
 const http = require('http');
 const url = require('url');
 const { spawn } = require('child_process');
+
+const app = express();
 
 const PORT = 8081;
 
