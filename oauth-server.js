@@ -9,7 +9,7 @@ const app = express();
 const PORT = 8081;
 
 // Google OAuth 설정
-const CLIENT_ID = '159046785658-07hf5ani7blsafsav0vrl19db7pkamdp.apps.googleusercontent.com';
+const CLIENT_ID = '196530803280-23q05vfrujb87dcuirfdbdkt9h78srjc.apps.googleusercontent.com';
 const REDIRECT_URI = 'http://localhost:8081/auth/callback';
 const SCOPES = 'https://www.googleapis.com/auth/drive';
 

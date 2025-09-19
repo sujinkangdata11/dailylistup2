@@ -6,25 +6,43 @@ const { google } = require('googleapis');
 class ListupSyncService {
   constructor(folderId, accessToken) {
     this.folderId = folderId;
+    this.auth = new google.auth.OAuth2();
+    this.auth.setCredentials({ access_token: accessToken });
     this.drive = google.drive({
       version: 'v3',
-      auth: new google.auth.OAuth2()
+      auth: this.auth
     });
-    this.drive.auth.setCredentials({ access_token: accessToken });
   }
 
   async getFilesFromDrive() {
     console.log('📂 Google Drive에서 파일 목록 조회 중...');
 
     try {
-      const response = await this.drive.files.list({
-        q: `'${this.folderId}' in parents and mimeType='application/json'`,
-        fields: 'files(id, name, modifiedTime)',
-        orderBy: 'modifiedTime desc'
-      });
+      let allFiles = [];
+      let nextPageToken = null;
+      let pageCount = 0;
 
-      console.log(`📄 총 ${response.data.files.length}개 JSON 파일 발견`);
-      return response.data.files;
+      do {
+        pageCount++;
+        console.log(`📄 페이지 ${pageCount} 조회 중...`);
+
+        const response = await this.drive.files.list({
+          q: `'${this.folderId}' in parents and mimeType='application/json'`,
+          fields: 'nextPageToken, files(id, name, modifiedTime)',
+          orderBy: 'modifiedTime desc',
+          pageSize: 1000, // 최대 1000개씩
+          pageToken: nextPageToken
+        });
+
+        allFiles = allFiles.concat(response.data.files);
+        nextPageToken = response.data.nextPageToken;
+
+        console.log(`📄 페이지 ${pageCount}: ${response.data.files.length}개 파일 (누적: ${allFiles.length}개)`);
+
+      } while (nextPageToken);
+
+      console.log(`📄 총 ${allFiles.length}개 JSON 파일 발견 (${pageCount}페이지)`);
+      return allFiles;
     } catch (error) {
       console.error('❌ Drive 파일 목록 조회 실패:', error.message);
       throw error;
@@ -40,7 +58,12 @@ class ListupSyncService {
         alt: 'media'
       });
 
-      return JSON.parse(response.data);
+      // response.data가 이미 객체인 경우와 문자열인 경우를 모두 처리
+      if (typeof response.data === 'string') {
+        return JSON.parse(response.data);
+      } else {
+        return response.data;
+      }
     } catch (error) {
       console.error(`❌ ${fileName} 다운로드 실패:`, error.message);
       throw error;
@@ -52,8 +75,17 @@ class ListupSyncService {
 
     const files = await this.getFilesFromDrive();
     const allChannelData = [];
+    let processedCount = 0;
+
+    console.log(`📊 총 ${files.length}개 파일 발견, 처리 시작...`);
 
     for (const file of files) {
+      // _channel_index.json 파일은 제외
+      if (file.name === '_channel_index.json') {
+        console.log(`⏭️  ${file.name} 제외 처리`);
+        continue;
+      }
+
       try {
         const data = await this.downloadFile(file.id, file.name);
 
@@ -62,38 +94,38 @@ class ListupSyncService {
 
         if (channelInfo) {
           allChannelData.push(channelInfo);
-          console.log(`✅ ${file.name} 처리 완료`);
+          processedCount++;
+          console.log(`✅ ${processedCount}/${files.length - 1} 처리 완료: ${file.name}`);
         }
       } catch (error) {
         console.error(`⚠️  ${file.name} 처리 중 오류:`, error.message);
       }
     }
 
-    console.log(`📊 총 ${allChannelData.length}개 채널 데이터 준비 완료`);
+    console.log(`📊 총 ${allChannelData.length}개 채널 데이터 처리 완료`);
     return allChannelData;
   }
 
   extractChannelInfo(fileName, data) {
-    // JSON 파일에서 채널 정보 추출
-    if (data && data.items && data.items.length > 0) {
-      const channel = data.items[0];
-
-      return {
-        channelId: channel.id,
-        title: channel.snippet?.title || 'Unknown',
-        description: channel.snippet?.description || '',
-        subscriberCount: parseInt(channel.statistics?.subscriberCount) || 0,
-        videoCount: parseInt(channel.statistics?.videoCount) || 0,
-        viewCount: parseInt(channel.statistics?.viewCount) || 0,
-        publishedAt: channel.snippet?.publishedAt,
-        thumbnails: channel.snippet?.thumbnails,
-        customUrl: channel.snippet?.customUrl,
-        fileName: fileName,
-        lastUpdated: new Date().toISOString()
-      };
-    }
-
-    return null;
+    // ⚠️ 중요: 이 부분 절대 건드리지 말 것! ⚠️
+    // 원본 JSON 데이터를 완전히 그대로 저장해야 함
+    // - 파싱 없음
+    // - 필드 추가 없음 (fileName, lastUpdated 등 금지)
+    // - 순서 변경 없음
+    // - 구조 변경 없음
+    //
+    // 최종 KV 저장 형태:
+    // {
+    //   "channelId": "UCo4lhdBH3sFwkTjIHyfNmYw",
+    //   "staticData": { "publishedAt": "2015-02-07T04:13:25Z" },
+    //   "snapshots": [...],
+    //   "recentThumbnailsHistory": [...],
+    //   "dailyViewsHistory": [...],
+    //   "weeklyViewsHistory": [...],
+    //   "subscriberHistory": [...],
+    //   "metadata": {...}
+    // }
+    return data;
   }
 
   async saveToKVFormat() {
